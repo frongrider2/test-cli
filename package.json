@@ -16,6 +16,7 @@
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.10.1",
+    "@types/ws": "^8.5.13",
     "commander": "^12.1.0",
     "dotenv": "^16.4.6",
     "fs-extra": "^11.2.0",
@@ -28,6 +29,7 @@
     "axios": "^1.7.8",
     "child_process": "^1.0.2",
     "inquirer": "^12.1.0",
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "ws": "^8.18.0"
   }
 }
