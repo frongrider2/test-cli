@@ -29,3 +29,10 @@ export const DOCKER_COMPOSE_SERVICE = {
     backend: 'backend-main',
   },
 };
+
+export const ContainerServiceList = [
+  {
+    name: 'backend-main',
+    
+  }
+]

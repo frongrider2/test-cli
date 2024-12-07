@@ -1,6 +1,6 @@
-import axios from "axios";
-import { getDockerComposePath, getEnvValue } from ".";
-import path from "path";
+import axios from 'axios';
+import { getDockerComposePath, getEnvValue } from '.';
+import path from 'path';
 
 /**
  * Get authentication token
@@ -34,11 +34,14 @@ export const getAuthToken = async () => {
   return AUTHEN_TOKEN;
 };
 
-
 export const getDeploymentStatus = async () => {
   let status = '';
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error('❌ Token is not found');
+  }
   try {
-    const data = await axios.get('http://localhost:3050/api/deployment/status');
+    const data = await axios.get('http://localhost:3050/api/deploy/status');
     if (data.status === 200) {
       status = data.data.status;
     } else {

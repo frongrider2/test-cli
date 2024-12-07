@@ -2,6 +2,10 @@ import path from 'path';
 import { runCommand } from '../utils';
 import { CONFIG, PATH_NAME } from '../utils/config';
 import axios from 'axios';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execPromise = promisify(exec);
 
 /**
  * Get docker-compose version and verify if it is installed
@@ -94,4 +98,79 @@ export const getDeploymentAPIStatus = async (): Promise<boolean> => {
     }
   } catch (e) {}
   return isDeploymentCompleted;
+};
+
+export enum DockerStatus {
+  RUNNING = 'RUNNING',
+  EXITED = 'EXITED',
+  CREATED = 'CREATED',
+  PAUSED = 'PAUSED',
+  RESTART = 'RESTART',
+  UNKNOWN = 'UNKNOWN',
+}
+
+
+/**
+ * Function to map Docker status strings to standardized statuses.
+ * @param {string} status - The `STATUS` field from `docker ps`.
+ * @returns {DockerStatus} - A standardized status like "RUNNING", "EXITED", etc.
+ */
+function getDockerStatus(status: string): DockerStatus {
+  if (!status || typeof status !== 'string') {
+    throw new Error('Invalid status input');
+  }
+
+  // Normalize and map status
+  if (status.startsWith('Up')) {
+    return DockerStatus.RUNNING;
+  } else if (status.startsWith('Exited')) {
+    return DockerStatus.EXITED;
+  } else if (status.startsWith('Created')) {
+    return DockerStatus.CREATED;
+  } else if (status.startsWith('Paused')) {
+    return DockerStatus.PAUSED;
+  } else if (status.startsWith('Restarting')) {
+    return DockerStatus.RESTART;
+  } else if (status.startsWith('Dead')) {
+    return DockerStatus.EXITED;
+  } else {
+    return DockerStatus.UNKNOWN;
+  }
+}
+
+/**
+ * Function to get the list of all Docker containers and their statuses.
+ * @returns {Promise<{ id: string, image: string, name: string, statusText: string, status: DockerStatus }[]>}
+ */
+export const getAllDockerPs = async (): Promise<
+  {
+    id: string;
+    image: string;
+    name: string;
+    statusText: string;
+    status: DockerStatus;
+  }[]
+> => {
+  // get container id from docker ps (image, container id, name,status)
+  const splitSting = '|~~|';
+  const { stdout } = await execPromise(
+    `docker ps --format "{{.ID}}${splitSting}{{.Image}}${splitSting}{{.Names}}${splitSting}{{.Status}}"`
+  );
+
+  const containerListString = stdout.split('\n');
+  containerListString.pop();
+  const containerList = containerListString.map((container) => {
+    const [id, image, name, statusText] = container.split(splitSting);
+    const status = getDockerStatus(statusText);
+
+    return {
+      id,
+      image,
+      name,
+      statusText,
+      status,
+    };
+  });
+  // console.log(containerList);
+  return containerList;
 };

@@ -20,7 +20,7 @@ import { loadingBarAnimationInfinite } from '../utils/log';
 
 let dockerCompose: string;
 const execPromise = promisify(exec);
-
+let check = false;
 
 /**
  * Deploy Rest API
@@ -46,6 +46,7 @@ export const apiDeployCmdCli = async () => {
       console.log('🔨 Docker Compose down command completed successfully.');
     } catch (error) {
       console.error('❌ Error executing Docker Compose down command:', error);
+      throw error;
     }
 
     try {
@@ -55,10 +56,30 @@ export const apiDeployCmdCli = async () => {
           cwd: dockerComposePath,
         }
       );
-      console.log('🔨 Docker Compose up command completed successfully.');
+      console.log('🔨 Docker Compose building.');
+
+      check = false;
+      while (!check) {
+        const deploymentAPIStatusAfter = await getDeploymentAPIStatus();
+        if (deploymentAPIStatusAfter) {
+          check = true;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+      console.log('✅ Deployment Rest API is ready to use');
+      return;
     } catch (error) {
       console.error('❌ Error executing Docker Compose up command:', error);
+      throw error;
     }
+  }
+
+  if (deploymentAPIStatus && envExists) {
+    console.log(
+      colors.fg.yellow,
+      '✅ Deployment Rest API is already running',
+      colors.reset
+    );
     return;
   }
 
@@ -81,14 +102,14 @@ export const apiDeployCmdCli = async () => {
       name: 'user_name',
       message: 'Enter the user name of database:',
       validate: (input) => (input ? true : 'User name cannot be empty.'),
-      default: 'postgres',
+      default: 'admin',
     },
     {
       type: 'input',
       name: 'user_password',
       message: 'Enter the user password of database:',
       validate: (input) => (input ? true : 'User password cannot be empty.'),
-      default: 'password',
+      default: 'pass1234',
     },
     {
       type: 'input',
@@ -146,13 +167,13 @@ export const apiDeployCmdCli = async () => {
       }
     );
     clearInterval(loading);
-    console.log('🔨 Docker Compose up command completed successfully.');
+    console.log('🔨 Docker Compose building.');
   } catch (error) {
     console.error('❌ Error executing Docker Compose down command:', error);
     clearInterval(loading);
-    return;
+    throw error;
   }
-  let check = false;
+  check = false;
 
   while (!check) {
     const deploymentAPIStatusAfter = await getDeploymentAPIStatus();

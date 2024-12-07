@@ -1,6 +1,7 @@
 import inquirer from 'inquirer';
 import { RollupdeployCommandCLI } from './rollup-deploy-cmd-cli';
 import { apiDeployCmdCli } from './api-deploy-cmd-cli';
+import { InfoCMDCLI } from './info.cmd-cmd';
 
 enum Action {
   deployUI = 'deployUI',
@@ -12,19 +13,19 @@ enum Action {
   backupConfig = 'backupConfig',
   delete = 'delete',
   chainInfo = 'chainInfo',
+  exit= 'exit',
 }
 
 export const mainCMDCLI = async () => {
   await apiDeployCmdCli();
   // select the command
-  console.log('🚀 Select the action');
 
   const actionAns = await inquirer.prompt([
     // list choice with description
     {
       type: 'list',
       name: 'action',
-      message: 'Select the action',
+      message: '🚀 Select the action',
       choices: [
         {
           name: '1) Launch Deployment UI',
@@ -62,6 +63,10 @@ export const mainCMDCLI = async () => {
           name: '8) Delete Chain',
           value: Action.delete,
         },
+        {
+          name: '9) Exit',
+          value: Action.exit,
+        },
       ],
     },
   ]);
@@ -79,7 +84,7 @@ export const mainCMDCLI = async () => {
       console.log('Importing');
       break;
     case Action.chainInfo:
-      console.log('Chain Info');
+      await InfoCMDCLI();
       break;
     case Action.status:
       console.log('Status');
@@ -95,6 +100,9 @@ export const mainCMDCLI = async () => {
       break;
     case Action.delete:
       console.log('Delete');
+      break;
+    case Action.exit:
+      console.log('Exit');
       break;
   }
 };

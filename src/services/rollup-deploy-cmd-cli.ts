@@ -1,13 +1,8 @@
 import inquirer from 'inquirer';
 import axios from 'axios';
-import {
-  CONFIG,
-} from '../utils/config';
+import { CONFIG } from '../utils/config';
 import { colors } from '../utils/colors';
-import {
-  loadingBarAnimationInfinite,
-  rollupConfigLog,
-} from '../utils/log';
+import { loadingBarAnimationInfinite, rollupConfigLog } from '../utils/log';
 
 import { getAuthToken } from '../shared/api';
 let AUTHEN_TOKEN = '';
@@ -59,6 +54,14 @@ export async function RollupdeployCommandCLI(onlyUI = false) {
         input ? true : 'Deployer Private Key cannot be empty.',
       default: '0x',
     },
+    {
+      type: 'input',
+      name: 'ADMIN_PRIVATE_KEY',
+      message: 'Enter the Admin Private Key:',
+      validate: (input) =>
+        input ? true : 'Admin Private Key cannot be empty.',
+      default: '0x',
+    },
   ]);
   console.log(colors.fg.yellow, 'Config your Layer 1', colors.reset);
   const L1Form = await inquirer.prompt([
@@ -67,14 +70,15 @@ export async function RollupdeployCommandCLI(onlyUI = false) {
       name: 'L1_RPC_URL',
       message: 'Enter the L1 RPC URL:',
       validate: (input) => (input ? true : 'L1 RPC URL cannot be empty.'),
-      default: 'https://eth.llamarpc.com',
+      default:
+        'https://quick-serene-pine.ethereum-holesky.quiknode.pro/a5c5ac0df0f0656d58699a732b567738f0ef6542',
     },
     {
       type: 'number',
       name: 'L1_CHAIN_ID',
       message: 'Enter the L1 Chain ID:',
       validate: (input) => (input ? true : 'L1 Chain ID cannot be empty.'),
-      default: 1,
+      default: 17000,
     },
     {
       type: 'input',
@@ -120,7 +124,7 @@ export async function RollupdeployCommandCLI(onlyUI = false) {
       message: 'Enter the L1 Block Explorer URL:',
       validate: (input) =>
         input ? true : 'L1 Block Explorer URL cannot be empty.',
-      default: 'https://etherscan.io',
+      default: 'https://holesky.beaconcha.in',
     },
     {
       type: 'input',
@@ -145,6 +149,7 @@ export async function RollupdeployCommandCLI(onlyUI = false) {
         'basic',
         'any',
       ],
+      default: 'quicknode',
     },
     {
       type: 'input',
@@ -202,7 +207,7 @@ export async function RollupdeployCommandCLI(onlyUI = false) {
       message: 'Enter the Rollup Native Currency Symbol:',
       validate: (input) =>
         input ? true : 'Rollup Native Currency Symbol cannot be empty.',
-      default: 'OETH',
+      default: 'ETH',
     },
     {
       type: 'input',
@@ -296,7 +301,7 @@ export async function RollupdeployCommandCLI(onlyUI = false) {
   const COLOR_PRIMARY = `'${bridgeUIForm.COLOR_PRIMARY}'`;
   const COLOR_SECONDARY = `'${bridgeUIForm.COLOR_SECONDARY}'`;
 
-  const postData = {
+  const postData: { [key: string]: any } = {
     ...privateKeyForm,
     ...L1Form,
     ...rollupForm,
@@ -317,10 +322,19 @@ export async function RollupdeployCommandCLI(onlyUI = false) {
     return;
   }
 
+  // trim if there is string all in the object postData
+  for (const key in postData) {
+    if (typeof postData[key] === 'string') {
+      postData[key] = postData[key].trim();
+    }
+  }
+
+  console.log(postData);
+
+  const loadingRollup = loadingBarAnimationInfinite(
+    'Rollup deployment request by API'
+  );
   try {
-    const loadingRollup = loadingBarAnimationInfinite(
-      'Rollup deployment request by API'
-    );
     const res = await axios.post(
       `${CONFIG.DEPLOYMENT_URL}/api/deploy/rollup`,
       postData,
@@ -331,7 +345,7 @@ export async function RollupdeployCommandCLI(onlyUI = false) {
       }
     );
     if (res.status === 200) {
-      console.log('✅ Rollup deployment is building');
+      console.log('🔨 Rollup deployment is building');
       console.log(
         `👩🏻‍💻 Rollup is building if you want to moniter logs use ( opstack-cli logs building )`
       );
@@ -340,8 +354,9 @@ export async function RollupdeployCommandCLI(onlyUI = false) {
     }
     clearInterval(loadingRollup);
     return;
-  } catch (error) {
+  } catch (error : any) {
     console.log('❌ Rollup deployment is failed');
-    console.log('Error: ', error);
+    console.log('Error: ', error.message || error); 
+    clearInterval(loadingRollup);
   }
 }
