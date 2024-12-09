@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { getDockerComposePath, getEnvValue } from '.';
 import path from 'path';
+import { DockerStatus } from '../types';
 
 /**
  * Get authentication token
@@ -52,4 +53,37 @@ export const getDeploymentStatus = async () => {
   }
 
   return status;
+};
+
+export const getContainerStatus = async (
+  token?: string
+): Promise<
+  {
+    id: string;
+    image: string;
+    name: string;
+    statusText: string;
+    status: DockerStatus;
+  }[]
+> => {
+  if (!token) {
+    token = await getAuthToken();
+  }
+
+  try {
+    const data = await axios.get('http://localhost:3050/api/deploy/container', {
+      headers: {
+        Authorization: `${token}`,
+      },
+    });
+    if (data.status === 200) {
+      return data.data;
+    } else {
+      console.log('❌ Get deployment status is failed');
+      return [];
+    }
+  } catch (e) {
+    console.log('Error: ', e);
+    return [];
+  }
 };

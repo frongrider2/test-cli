@@ -32,3 +32,11 @@ export async function runCommand(command: string) {
     console.error('Command failed:', error);
   }
 }
+
+export const consoleLogTable = (data: any[]) => {
+  // console.log tha table with key as header and value as row
+  const header = Object.keys(data[0]);
+  const rows = data.map((row) => Object.values(row));
+  console.log(header, rows);
+  console.table(data, header);
+};

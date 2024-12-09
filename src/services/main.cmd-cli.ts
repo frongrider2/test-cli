@@ -2,6 +2,7 @@ import inquirer from 'inquirer';
 import { RollupdeployCommandCLI } from './rollup-deploy-cmd-cli';
 import { apiDeployCmdCli } from './api-deploy-cmd-cli';
 import { InfoCMDCLI } from './info.cmd-cmd';
+import { LogsCmd } from './logs-cmd-cli';
 
 enum Action {
   deployUI = 'deployUI',
@@ -90,7 +91,7 @@ export const mainCMDCLI = async () => {
       console.log('Status');
       break;
     case Action.logs:
-      console.log('Logs');
+      await LogsCmd();
       break;
     case Action.backupConfig:
       console.log('Backup Config');

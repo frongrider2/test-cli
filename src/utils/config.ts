@@ -1,6 +1,6 @@
 export const CONFIG = {
   DEPLOYMENT_REPO: 'https://github.com/upnodedev/opstack-deployment.git',
-  DEPLOYMENT_REPO_VERSION: 'v1.0.1',
+  DEPLOYMENT_REPO_VERSION: 'v1.0.3',
   DEPLOYMENT_URL: 'http://localhost:3050',
   DEPLOYMENT_WS_URL: 'ws://localhost:3050',
 };
@@ -33,6 +33,6 @@ export const DOCKER_COMPOSE_SERVICE = {
 export const ContainerServiceList = [
   {
     name: 'backend-main',
-    
+
   }
 ]

@@ -1,7 +1,42 @@
 import { StatusCMDCLI } from './services/status-cmd-cli';
+import { getContainerStatus } from './shared/api';
+import { consoleLogTable } from './utils';
 
-StatusCMDCLI().then(() => {
-  console.log('Done!');
+StatusCMDCLI().then(async () => {
+  const data = [
+    {
+      id: '36cad92ee6ce',
+      image: 'opstack-deployment-frontend-main',
+      name: 'deployment-frontend',
+      statusText: 'Up 31 minutes',
+      status: 'RUNNING',
+      profile: 'Deployment',
+    },
+    {
+      id: 'f4eff0f73973',
+      image: 'opstack-deployment-backend-main',
+      name: 'deployment-backend',
+      statusText: 'Up 31 minutes',
+      status: 'RUNNING',
+      profile: 'Deployment',
+    },
+    {
+      id: '89e4b1153d1d',
+      image: 'traefik-envsubst',
+      name: 'deployment-traefik',
+      statusText: 'Up 31 minutes',
+      status: 'RUNNING',
+      profile: 'Deployment',
+    },
+    {
+      id: 'b3f74a505453',
+      image: 'postgres:13',
+      name: 'deployment-db',
+      statusText: 'Up 31 minutes (healthy)',
+      status: 'RUNNING',
+      profile: 'Deployment',
+    },
+  ];
+
+  consoleLogTable(data);
 });
-// 0x225b7b1e4ac2ae05e8fedb88ad21741796d37113b69c3b6f412f50050a59934a
-// 0xe7200279dabfc7aebb57ffa0f3c59244bb06ca920b804262019ad5a1dff642a1
