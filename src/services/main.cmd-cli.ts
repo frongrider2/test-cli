@@ -7,6 +7,8 @@ import { LogsCmd } from './logs-cmd-cli';
 enum Action {
   deployUI = 'deployUI',
   deploy = 'deploy',
+  start = 'start',
+  stop = 'stop',
   logs = 'logs',
   import = 'import',
   status = 'status',
@@ -37,35 +39,43 @@ export const mainCMDCLI = async () => {
           value: Action.deploy,
         },
         {
-          name: '3) Import existing OP Stack deployment',
+          name: '3) Start the deployment',
+          value: Action.start,
+        },
+        {
+          name: '4) Stop the deployment',
+          value: Action.stop,
+        },
+        {
+          name: '5) Import existing OP Stack deployment',
           value: Action.import,
         },
         {
-          name: '4) Chain Info',
+          name: '6) Chain Info',
           value: Action.chainInfo,
         },
         {
-          name: '5) Status of the deployment',
+          name: '7) Status of the deployment',
           value: Action.status,
         },
         {
-          name: '6) View logs',
+          name: '8) View logs',
           value: Action.logs,
         },
         {
-          name: '6) Backup Config',
+          name: '9) Backup Config',
           value: Action.backupConfig,
         },
         {
-          name: '7) Backup Data Snapshot',
+          name: '10) Backup Data Snapshot',
           value: Action.backup,
         },
         {
-          name: '8) Delete Chain',
+          name: '11) Delete Chain',
           value: Action.delete,
         },
         {
-          name: '9) Exit',
+          name: '12) Exit',
           value: Action.exit,
         },
       ],
@@ -80,6 +90,12 @@ export const mainCMDCLI = async () => {
       break;
     case Action.deploy:
       await RollupdeployCommandCLI(false);
+      break;
+    case Action.start:
+      console.log('Starting');
+      break;
+    case Action.stop:
+      console.log('Stopping');
       break;
     case Action.import:
       console.log('Importing');
