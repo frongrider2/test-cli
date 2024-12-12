@@ -3,6 +3,7 @@ import { RollupdeployCommandCLI } from './rollup-deploy-cmd-cli';
 import { apiDeployCmdCli } from './api-deploy-cmd-cli';
 import { InfoCMDCLI } from './info.cmd-cmd';
 import { LogsCmd } from './logs-cmd-cli';
+import { StatusCMDCLI } from './status-cmd-cli';
 
 enum Action {
   deployUI = 'deployUI',
@@ -104,7 +105,7 @@ export const mainCMDCLI = async () => {
       await InfoCMDCLI();
       break;
     case Action.status:
-      console.log('Status');
+      await StatusCMDCLI();
       break;
     case Action.logs:
       await LogsCmd();

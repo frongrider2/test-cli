@@ -1,11 +1,12 @@
 import { exec } from 'child_process';
 import { getDockerCompose, getDockerComposePath } from '../shared';
 import { colors } from '../utils/colors';
-import { ContainerProfileList, ContainerProfileType } from '../types';
-import { WS_CLIENT } from '../shared/web-socket-client';
+import WebSocket from 'ws';
+import blessed from 'blessed';
 import { getAuthToken, getContainerStatus } from '../shared/api';
-import { consoleLogTable } from '../utils';
-import inquirer from 'inquirer';
+import { CONFIG } from '../utils/config';
+
+let ws: WebSocket | null = null;
 
 /**
  * Get logs of the services
@@ -57,63 +58,137 @@ export async function LogsCmdAPICLI(options: any) {
   }
 }
 
-/**
- * Get logs of the services
- * @param {ContainerProfileType} service
- */
-export async function LogsCmdCLI(service: ContainerProfileType) {
+export async function LogsCmd() {
+  console.clear();
+  
+  // Create a screen
+  const screen = blessed.screen({
+    smartCSR: true,
+    title: 'Service Viewer',
+  });
+  // screen.enableInput();
   const token = await getAuthToken();
-  const ws = WS_CLIENT(token);
-  ws.on('open', () => {
-    ws.send(service);
+  const containerStatus = await getContainerStatus(token);
+  const items = containerStatus.map((status) => status.name);
 
-    ws.on('message', (data : any) => {
-      // buffer the string format of the data
-      const bufferData = Buffer.from(data).toString('utf-8');
-      console.log(bufferData);
+  // Service List
+  const serviceList = blessed.list({
+    top: 0,
+    left: 0,
+    width: '30%',
+    height: '100%',
+    label: ' Services ',
+    border: { type: 'line' },
+    style: {
+      selected: { bg: 'blue', fg: 'white' },
+      border: { fg: 'cyan' },
+    },
+    keys: true, // Enable keyboard navigation
+    mouse: true, // Optional: Enable mouse interaction
+    items: items,
+  });
+
+  // Log Status
+  const logStatus = blessed.box({
+    top: 0,
+    left: '30%',
+    width: '70%',
+    height: '20%',
+    label: 'Status',
+    border: { type: 'line' },
+    scrollable: true,
+    alwaysScroll: true,
+    style: { border: { fg: 'yellow' } },
+  });
+
+  // Log Viewer
+  const logViewer = blessed.box({
+    top: '20%',
+    left: '30%',
+    width: '70%',
+    height: '85%',
+    label: ' Logs ',
+    border: { type: 'line' },
+    scrollable: true,
+    alwaysScroll: true,
+    style: { border: { fg: 'green' } },
+  });
+
+  // Append widgets to the screen
+  screen.append(serviceList);
+  screen.append(logStatus);
+  screen.append(logViewer);
+  // Focus on the service list
+  serviceList.focus();
+
+  async function connectToService(service: string) {
+    if (ws) {
+      ws.close();
+    }
+
+    const logStatusContent = await getContainerStatus(token);
+    const selectedService = logStatusContent.find(
+      (status) => status.name === service
+    );
+    if (selectedService) {
+      logStatus.setContent(
+        `Service: ${selectedService.name}\nStatus: ${selectedService.status}`
+      );
+    }
+
+    logViewer.setContent(`Connecting to ${service}...`);
+    screen.render();
+
+    ws = new WebSocket(`${CONFIG.DEPLOYMENT_WS_URL}?token=${token}`);
+
+    ws.on('open', () => {
+      ws?.send(service); // Send the service name to the WebSocket server
+      logViewer.setContent(`Connected to ${service}. Waiting for logs...`);
+      screen.render();
+    });
+
+    ws.on('message', (data) => {
+      logViewer.setContent(logViewer.getContent() + data.toString() + '\n');
+      logViewer.setScrollPerc(100); // Auto-scroll to the bottom
+      screen.render();
+    });
+
+    ws.on('error', (err) => {
+      logViewer.setContent(`Error: ${err.message}`);
+      screen.render();
     });
 
     ws.on('close', () => {
-      // console.log('Disconnected from the server');
+      logViewer.setContent(`Disconnected from ${service}`);
+      screen.render();
     });
+  }
 
-    ws.on('error', (error) => {
-      // console.log('Error: ', error);
-    });
+  // Handle selection and key events
+  serviceList.on('select', async (item) => {
+    const service = item.getText();
+    await connectToService(service);
   });
 
-  // Send the service name to the server
-}
+  serviceList.key(['up', 'down'], () => {
+    screen.render(); // Ensure the screen refreshes after moving selection
+  });
 
-export async function LogsCmd() {
-  console.clear();
-  const containerStatus = await getContainerStatus();
+  // Quit on Escape, q, or Control-C
+  screen.key(['escape', 'q', 'C-c'], () => {
+    if (ws) {
+      ws.close();
+    }
+    return process.exit(0);
+  });
 
-  consoleLogTable(containerStatus as any);
+  // Render the screen
+  screen.render();
 
-  const actionAns = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'service',
-      message: 'Select a service to view logs',
-      choices: [
-        {
-          name: 'All',
-          value: 'all',
-        },
-        ...containerStatus.map((container: any) => {
-          return {
-            name: `${container.profile} - ${container.name}`,
-            value: container.name,
-          };
-        }),
-      ],
-    },
-  ]);
-
-  if (actionAns.service === 'all') {
-    LogsCmdAPICLI({ follow: true, tail: 'all' });
-  } else {
-    LogsCmdCLI(actionAns.service);
-  }
+  process.stdin.on('data', (chunk) => {
+    // Suppress raw escape sequences like `^[OB`
+    if (chunk.toString().startsWith('\u001b')) {
+      return;
+    }
+  });
 }

@@ -40,3 +40,9 @@ export const consoleLogTable = (data: any[]) => {
   console.log(header, rows);
   console.table(data, header);
 };
+
+export function stripAnsiCodes(str: string) {
+  // Regular expression to match ANSI escape codes
+  const ansiRegex = /\x1B\[[0-?]*[ -/]*[@-~]/g;
+  return str.replace(ansiRegex, '');
+}
