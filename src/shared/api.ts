@@ -7,13 +7,20 @@ import { DockerStatus } from '../types';
  * Get authentication token
  * @returns {Promise<string>}
  */
-export const getAuthToken = async () => {
+export const getAuthToken = async (
+  username: string = '',
+  password: string = ''
+) => {
   let AUTHEN_TOKEN = '';
   const dockerComposePath = await getDockerComposePath();
   const envPath = path.join(dockerComposePath, '.env');
   // get username and password read from envPath
-  const username = await getEnvValue(envPath, 'USER_NAME');
-  const password = await getEnvValue(envPath, 'USER_PASSWORD');
+  if (!username) {
+    username = await getEnvValue(envPath, 'USER_NAME');
+  }
+  if (!password) {
+    password = await getEnvValue(envPath, 'USER_PASSWORD');
+  }
   if (!username || !password) {
     console.log('❌ Username or password is not found');
     return AUTHEN_TOKEN;

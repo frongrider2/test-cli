@@ -60,14 +60,14 @@ export async function LogsCmdAPICLI(options: any) {
 
 export async function LogsCmd() {
   console.clear();
-  
+
   // Create a screen
   const screen = blessed.screen({
     smartCSR: true,
     title: 'Service Viewer',
   });
   // screen.enableInput();
-  const token = await getAuthToken();
+  const token = await getAuthToken('admin', 'pass1234');
   const containerStatus = await getContainerStatus(token);
   const items = containerStatus.map((status) => status.name);
 
@@ -106,7 +106,7 @@ export async function LogsCmd() {
     top: '20%',
     left: '30%',
     width: '70%',
-    height: '85%',
+    height: '80%',
     label: ' Logs ',
     border: { type: 'line' },
     scrollable: true,
@@ -126,6 +126,8 @@ export async function LogsCmd() {
       ws.close();
     }
 
+    // await new Promise((resolve) => setTimeout(resolve, 500));
+
     const logStatusContent = await getContainerStatus(token);
     const selectedService = logStatusContent.find(
       (status) => status.name === service
@@ -142,9 +144,13 @@ export async function LogsCmd() {
     ws = new WebSocket(`${CONFIG.DEPLOYMENT_WS_URL}?token=${token}`);
 
     ws.on('open', () => {
-      ws?.send(service); // Send the service name to the WebSocket server
-      logViewer.setContent(`Connected to ${service}. Waiting for logs...`);
-      screen.render();
+      if (ws) {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(service); // Send the service name to the WebSocket server
+          logViewer.setContent(`Connected to ${service}. Waiting for logs...`);
+          screen.render();
+        }
+      }
     });
 
     ws.on('message', (data) => {
@@ -153,15 +159,15 @@ export async function LogsCmd() {
       screen.render();
     });
 
-    ws.on('error', (err) => {
-      logViewer.setContent(`Error: ${err.message}`);
-      screen.render();
-    });
+    // ws.on('error', (err) => {
+    //   logViewer.setContent(`Error: ${err.message}`);
+    //   screen.render();
+    // });
 
-    ws.on('close', () => {
-      logViewer.setContent(`Disconnected from ${service}`);
-      screen.render();
-    });
+    // ws.on('close', () => {
+    //   logViewer.setContent(`Disconnected from ${service}`);
+    //   screen.render();
+    // });
   }
 
   // Handle selection and key events

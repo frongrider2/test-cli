@@ -17,7 +17,7 @@ enum Action {
   backupConfig = 'backupConfig',
   delete = 'delete',
   chainInfo = 'chainInfo',
-  exit= 'exit',
+  exit = 'exit',
 }
 
 export const mainCMDCLI = async () => {
